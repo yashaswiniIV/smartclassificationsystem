@@ -1,0 +1,55 @@
+[project]
+name = "civicpulse-backend"
+version = "0.1.0"
+description = "CivicPulse AI backend — FastAPI API + AI worker"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic[email]>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "geoalchemy2>=0.16",
+    "pgvector>=0.3.6",
+    "redis>=5.2",
+    "arq>=0.26",
+    "structlog>=24.4",
+    "pyjwt>=2.10",
+    "argon2-cffi>=23.1",
+    "httpx>=0.28",
+    "boto3>=1.35",
+    "fastembed>=0.4",
+    "langdetect>=1.0.9",
+    "statsmodels>=0.14",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# One event loop for the whole session: the app's redis client and async DB engine
+# are module-level singletons that bind to the loop alive when first used. A fresh
+# loop per test (pytest-asyncio's default) would orphan those pools → "loop is closed".
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::pytest.PytestDeprecationWarning",
+]
+markers = [
+    "integration: requires docker compose infra (deselect with -m 'not integration')",
+]

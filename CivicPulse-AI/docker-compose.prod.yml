@@ -1,0 +1,127 @@
+name: civicpulse-prod
+
+# Production stack: one public origin via Caddy (/ → frontend, /api → API,
+# /civicpulse-media → MinIO). Reads secrets from .env.prod (see .env.prod.example).
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml run --rm api .venv/bin/python -m scripts.seed
+
+services:
+  postgres:
+    build: { context: ./infra, dockerfile: postgres.Dockerfile }
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-civicpulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-civicpulse}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-civicpulse}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?set in .env.prod}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?set in .env.prod}
+    volumes: [minio-data:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY} ${S3_SECRET_KEY} &&
+      mc mb -p local/${S3_BUCKET:-civicpulse-media} &&
+      mc anonymous set download local/${S3_BUCKET:-civicpulse-media} || true
+      "
+
+  # One-shot: apply migrations, then exit. api waits for it to finish.
+  migrate:
+    build: { context: ./backend, target: api, network: host }
+    command: [".venv/bin/alembic", "upgrade", "head"]
+    env_file: [.env.prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-civicpulse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-civicpulse}
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    build: { context: ./backend, target: api, network: host }
+    env_file: [.env.prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-civicpulse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-civicpulse}
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: ${PUBLIC_S3_ENDPOINT_URL}
+      FASTEMBED_CACHE_PATH: /models
+    # Persist the ~120MB embedding model so it downloads once, not per container.
+    volumes: [model-cache:/models]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  worker:
+    build: { context: ./backend, target: api, network: host }
+    command: [".venv/bin/arq", "workers.main.WorkerSettings"]
+    env_file: [.env.prod]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-civicpulse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-civicpulse}
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
+      PIPELINE_INLINE: "false"
+      FASTEMBED_CACHE_PATH: /models
+    volumes: [model-cache:/models]
+    depends_on:
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      network: host
+      args:
+        # Empty → the browser calls the API at a relative /api path on whatever
+        # origin served the page (same origin via Caddy). Keeps this image
+        # independent of the (ephemeral) public URL — no rebuild when it changes.
+        NEXT_PUBLIC_API_URL: ""
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api, frontend]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  minio-data:
+  caddy-data:
+  caddy-config:
+  model-cache:

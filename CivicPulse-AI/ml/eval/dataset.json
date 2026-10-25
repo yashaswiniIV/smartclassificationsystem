@@ -1,0 +1,75 @@
+{
+  "_comment": "Hand-labeled eval set for CivicPulse AI. 'categorization' tests zero-shot category accuracy (incl. Hindi/Hinglish). 'duplicate_groups' tests dedup: texts in the same group are the SAME real-world problem (should merge); texts in different groups are different problems (should NOT merge).",
+  "categorization": [
+    {"text": "Huge pothole in the middle of the road, very dangerous for bikes", "category": "Pothole"},
+    {"text": "Bada gaddha hai sadak pe, gaadi kharab ho rahi hai", "category": "Pothole"},
+    {"text": "The road surface is cracking and breaking apart near the signal", "category": "Road cracking / damage"},
+    {"text": "Footpath is broken and tiles are missing, hard to walk", "category": "Broken footpath"},
+    {"text": "Garbage has not been collected for over a week, it stinks", "category": "Garbage dump / missed pickup"},
+    {"text": "Kachra nahi uthaya gaya, gali mein ganda pada hai", "category": "Garbage dump / missed pickup"},
+    {"text": "A dead dog is lying on the roadside since morning", "category": "Dead animal"},
+    {"text": "Public toilet near the market is filthy and unusable", "category": "Public toilet unclean"},
+    {"text": "Water pipe has burst and water is flowing onto the street", "category": "Water pipe leakage"},
+    {"text": "Paani ki pipe phat gayi hai, sadak pe paani beh raha hai", "category": "Water pipe leakage"},
+    {"text": "The whole street is flooded and waterlogged after the rain", "category": "Waterlogging / flooding"},
+    {"text": "Barsaat ke baad poori gali mein paani bhar gaya hai", "category": "Waterlogging / flooding"},
+    {"text": "No water supply in our area for the last three days", "category": "No water supply"},
+    {"text": "Streetlight has not been working for weeks, very dark at night", "category": "Streetlight not working"},
+    {"text": "Street light kharab hai, raat ko bahut andhera rehta hai", "category": "Streetlight not working"},
+    {"text": "Electric wires are hanging dangerously low over the road", "category": "Dangling wires"},
+    {"text": "A large tree branch has fallen and is blocking the road", "category": "Fallen tree / branches"},
+    {"text": "The park is overgrown and the play equipment is broken", "category": "Park maintenance"},
+    {"text": "Construction debris dumped illegally on the empty plot", "category": "Illegal construction debris"},
+    {"text": "Aggressive stray dogs are chasing children in our colony", "category": "Stray animal menace"},
+    {"text": "Massive crater on the main road damaged my car tyre", "category": "Pothole"},
+    {"text": "Overflowing dustbin and trash scattered all over the corner", "category": "Garbage dump / missed pickup"},
+    {"text": "Sewage and rainwater mixing and flooding the lane", "category": "Waterlogging / flooding"},
+    {"text": "Tap is dry, no municipal water coming since two days", "category": "No water supply"},
+    {"text": "Exposed live wire near the transformer, looks unsafe", "category": "Dangling wires"},
+    {"text": "Lamp post light is off on the entire stretch of road", "category": "Streetlight not working"},
+    {"text": "Dead cat on the footpath needs to be removed", "category": "Dead animal"},
+    {"text": "Pavement slabs are cracked and uneven, elderly can trip", "category": "Broken footpath"},
+    {"text": "Pack of stray dogs near the school gate biting people", "category": "Stray animal menace"},
+    {"text": "Uprooted tree fell on the road after last night storm", "category": "Fallen tree / branches"}
+  ],
+  "duplicate_groups": [
+    [
+      "Huge pothole near the bus stop on the main road",
+      "Big pothole by the bus stand on the main road, bikes keep falling",
+      "Bada gaddha hai bus stand ke paas main road pe"
+    ],
+    [
+      "Garbage pile not collected for a week near the temple",
+      "Trash heap rotting by the temple, no pickup for days",
+      "Mandir ke paas kachra hafte se nahi uthaya"
+    ],
+    [
+      "Streetlight not working on the corner of 5th cross",
+      "The light pole at 5th cross is dead, very dark at night"
+    ],
+    [
+      "Water pipe leaking and flooding the road near the school",
+      "Burst water pipe wasting water by the school gate"
+    ],
+    [
+      "Waterlogging in the underpass after every rain",
+      "The underpass floods and gets waterlogged whenever it rains"
+    ],
+    [
+      "Dangerous hanging electric wires over the market lane",
+      "Low hanging live wires across the market street, unsafe"
+    ],
+    [
+      "Fallen tree blocking the entire road after the storm",
+      "A big tree has come down and is blocking traffic"
+    ],
+    [
+      "Stray dogs menace near the park, biting morning walkers",
+      "Aggressive street dogs attacking people near the park"
+    ],
+    [
+      "Dead animal on the roadside needs removal near junction",
+      "A dead dog lying at the junction since morning"
+    ]
+  ]
+}

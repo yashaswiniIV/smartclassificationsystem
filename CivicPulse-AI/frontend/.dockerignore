@@ -1,0 +1,15 @@
+# Never ship host artifacts into the build — node_modules holds Windows-native
+# binaries (e.g. @next/swc-win32) that break `next build` on the Linux image,
+# and clobber the clean modules COPYed from the deps stage.
+node_modules
+.next
+out
+.git
+.gitignore
+Dockerfile
+.dockerignore
+npm-debug.log*
+*.tsbuildinfo
+# secrets never belong in an image layer
+.env
+.env.*
